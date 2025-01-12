@@ -22,14 +22,18 @@ class RegexHelper:
     DotTime : re.Pattern
     DoubleAt : re.Pattern
     WordReplacements : list[WordReplacement]    
+    TripleStar : re.Pattern
+    DoubleSpace : re.Pattern
 
     def __init__(self):
         self.LeadingWhiteSpace = re.compile(r'^[ \t]+', re.MULTILINE)
         self.Annotation = re.compile(r'\[[^\]]*\]', re.MULTILINE)
         self.Punctuation = re.compile(r'[\'\*"‘’“”-]+')
-        self.ChapterHeading = re.compile(r'chapter [ixv]+[\.]?')
+        self.ChapterHeading = re.compile(r'(chapter [ixv]+)([\.]?)')
         self.DotTime = re.compile(r'(\d+)[\.:](\d+)')                                     
         self.DoubleAt = re.compile(r'@@')
+        self.TripleStar = re.compile(r'\* \* \*')
+        self.DoubleSpace = re.compile(r'[ \t]+')
 
         self.WordReplacements = []
         self.WordReplacements.append(WordReplacement(re.compile("housemade"), "homemade"))
@@ -66,6 +70,7 @@ class RegexHelper:
         for punct in ['.', '?', '!']:
             for quot in ["'", '"', '’', '”', ')',']']:
                 text=text.replace(punct + quot, quot+punct)
+        text = text.replace("<stop><stop>","<stop>")
 
         text = text.replace(".",".<stop>")
         text = text.replace("?","?<stop>")

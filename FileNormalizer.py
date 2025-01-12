@@ -18,14 +18,21 @@ class FileNormalizer:
         file = FileNormalizer(input_file_path, regex)   
         file.Lowercase()
         file.NormalizeTimes()
-        file.RemoveChapterHeading()
+        file.RemoveTripleStar()
+        
         file.RemoveAnnotations()
         file.UpdateWordReplacements()
-        file.RemovePunctuation()
+        #file.RemovePunctuation()
+        
+        file.UpdateChapterHeadings()
+        
         file.PutBackTimeDelimeter()
         file.RemoveLeadingWhiteSpaceInLine()
+
+        file.RemoveDoubleSpace()
         file.StripEmptyLines()
         file.Sentencize()
+        file.TrimLeadingNewlines()
 
         file.Save(output_dir)
     
@@ -81,6 +88,10 @@ class FileNormalizer:
         output:str = TextProcessor.Remove(self.regex.ChapterHeading, self.text)
         self.text = output
 
+    def UpdateChapterHeadings(self)->None:
+        output:str = TextProcessor.Replace(self.regex.ChapterHeading, r'<stop>\1<stop>' ,self.text)
+        self.text = output
+
     def NormalizeTimes(self)->None:
         output : str = self.regex.DotTime.sub(r'\1@@\2', self.text)   #the '@@ will be replaced in a later step after removing spurious ':'s
         self.text = output
@@ -94,6 +105,22 @@ class FileNormalizer:
         for replacement in self.regex.WordReplacements:
             output = TextProcessor.Replace(replacement.Pattern, replacement.NewString, output)
         self.text = output
+
+    def TrimLeadingNewlines(self)->None:
+        output:str = self.text
+        while output[0]=='\n' or output[0]=='\r':
+            output = output[1:]
+        self.text=output
+
+    def RemoveTripleStar(self)->None:
+        output:str = self.text
+        output = TextProcessor.Remove(self.regex.TripleStar, output)
+        self.text=output
+
+    def RemoveDoubleSpace(self)->None:
+        output:str = self.text
+        output = TextProcessor.Replace(self.regex.DoubleSpace, ' ', output)
+        self.text=output
 
     @staticmethod
     def SaveText(filename:str, output_dir : str, text : str)->None:
