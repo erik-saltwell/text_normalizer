@@ -38,6 +38,9 @@ class RegexHelper:
         self.WordReplacements = []
         self.WordReplacements.append(WordReplacement(re.compile("housemade"), "homemade"))
         self.WordReplacements.append(WordReplacement(re.compile("st\."), "st"))
+        self.WordReplacements.append(WordReplacement(re.compile("mem\."), "mem"))
+        self.WordReplacements.append(WordReplacement(re.compile("dr\."), "dr"))
+        self.WordReplacements.append(WordReplacement(re.compile("hon\."), "hon"))
 
     def replace_all_matches(self, pattern, replacement, text):
         return re.sub(pattern, replacement, text)
