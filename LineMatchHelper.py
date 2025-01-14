@@ -1,5 +1,10 @@
 import difflib
 from os import path
+from typing import NamedTuple
+
+class ChapterMatchResult(NamedTuple):
+    ChapterId:int
+    Similarity:float
 
 class LineMatchHelper:
     @staticmethod
@@ -29,7 +34,7 @@ class LineMatchHelper:
     def SaveChapters(src: str, output_dir : str, outfile_prefix:str)->None:
         src_lines = src.splitlines()
         match : str = "chapter "
-        nested_src_lines : list[list[str]] = LineMatchHelper.__SplitLists(src_lines, match)
+        nested_src_lines : list[list[str]] = LineMatchHelper.SplitLists(src_lines, match)
         n=0
         for chapter_lines in nested_src_lines:
             output : str = "\n".join(chapter_lines)
@@ -42,8 +47,8 @@ class LineMatchHelper:
     @staticmethod
     def __GetMatched(src_lines : list[str], target_lines : list[str], min_diff_threshold : float)->list[str]:
         match : str = "chapter "
-        nested_src_lines : list[list[str]] = LineMatchHelper.__SplitLists(src_lines, match)
-        nested_target_lines : list[list[str]] =  LineMatchHelper.__SplitLists(target_lines, match)
+        nested_src_lines : list[list[str]] = LineMatchHelper.SplitLists(src_lines, match)
+        nested_target_lines : list[list[str]] =  LineMatchHelper.SplitLists(target_lines, match)
         LineMatchHelper.__TraceChapters(nested_src_lines, "src")
         LineMatchHelper.__TraceChapters(nested_target_lines, "target")
 
@@ -88,7 +93,7 @@ class LineMatchHelper:
         return filtered_lines
 
     @staticmethod 
-    def __SplitLists(src : list[str], check: str)->list [ list[str] ]:
+    def SplitLists(src : list[str], check: str)->list [ list[str] ]:
         return_value : list[ list[str]] = []
         current : list[str] = []
         for line in src:
@@ -99,3 +104,45 @@ class LineMatchHelper:
             current.append(line)
         return_value.append(current)
         return return_value
+    
+    @staticmethod
+    def FindMostSimilarChapter(src:str, targets:list[str])->ChapterMatchResult:
+        return_value:int=-1
+        best_similarity:float=-1.0
+        for i in range(len(targets)):
+            similarity = difflib.SequenceMatcher(None, src, targets[i]).ratio()
+            if similarity > best_similarity:
+                return_value=i
+                best_similarity=similarity
+        return ChapterMatchResult(return_value,best_similarity)
+
+    @staticmethod
+    def roman_to_int(roman:str)->int:
+        """
+        Convert a Roman numeral string to an integer.
+
+        Args:
+            roman (str): The Roman numeral string. Must be a valid Roman numeral.
+
+        Returns:
+            int: The integer representation of the input Roman numeral.
+        """
+        # Define a mapping of Roman numeral symbols to their values
+        roman_to_value = {
+            'I': 1, 'V': 5, 'X': 10, 'L': 50,
+            'C': 100, 'D': 500, 'M': 1000
+        }
+
+        total = 0
+        prev_value = 0
+
+        # Iterate over the Roman numeral string in reverse order
+        for char in reversed(roman):
+            value = roman_to_value[char]
+            if value < prev_value:
+                total -= value  # Subtract if the current value is less than the previous one
+            else:
+                total += value  # Add otherwise
+            prev_value = value
+
+        return total

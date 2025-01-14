@@ -14,9 +14,12 @@ class FileNormalizer:
         self.regex = regex
     
     @staticmethod 
-    def ProcessFile(input_file_path:str, output_dir:str, regex : RegexHelper)->None:
+    def ProcessFile(input_file_path:str, output_dir:str, regex : RegexHelper, rename_late_chapters:bool=False)->None:
         file = FileNormalizer(input_file_path, regex)   
         file.Lowercase()
+        if rename_late_chapters:
+            file.RenameLatechapters()
+
         file.NormalizeTimes()
         file.RemoveTripleStar()
         
@@ -122,8 +125,62 @@ class FileNormalizer:
         output = TextProcessor.Replace(self.regex.DoubleSpace, ' ', output)
         self.text=output
 
+    def RenameLatechapters(self)->None:
+        output:str = self.text  
+        chapter_start = r'chapter '
+        chapter_end_slug :str='<chapter_end>'
+        output = self.regex.ChapterHeading.sub(r'\1'+chapter_end_slug, output)
+        chapter_title_texts:dict[int,str] = {}
+        for x in range(1,30):
+            title_text = chapter_start+FileNormalizer.int_to_roman(x).lower()+chapter_end_slug
+            chapter_title_texts[x]=title_text
+        
+        for id in range(27,16,-1):
+            output = output.replace(chapter_title_texts[id],chapter_title_texts[id+2])
+        output = output.replace(chapter_title_texts[19], f"{chapter_title_texts[17]}\n{chapter_title_texts[18]}\n{chapter_title_texts[19]}")
+        output = output.replace(chapter_end_slug, '')
+        self.text=output
+
     @staticmethod
     def SaveText(filename:str, output_dir : str, text : str)->None:
         file_path = path.join(output_dir, filename)
         with open(file_path, 'w', encoding='utf-8') as f:
             output = f.write(text)
+
+    @staticmethod
+    def int_to_roman(num:int)->str:
+        """
+        Convert an integer to a Roman numeral.
+
+        Args:
+            num (int): The integer to be converted. Must be between 1 and 3999.
+
+        Returns:
+            str: The Roman numeral representation of the input integer.
+        """
+        if not (1 <= num <= 3999):
+            raise ValueError("Input must be an integer between 1 and 3999.")
+
+        # Define Roman numeral symbols and their values
+        val = [
+            1000, 900, 500, 400,
+            100, 90, 50, 40,
+            10, 9, 5, 4,
+            1
+        ]
+        symbols = [
+            "M", "CM", "D", "CD",
+            "C", "XC", "L", "XL",
+            "X", "IX", "V", "IV",
+            "I"
+        ]
+
+        roman_numeral = ""
+        for i in range(len(val)):
+            while num >= val[i]:
+                roman_numeral += symbols[i]
+                num -= val[i]
+
+        return roman_numeral
+    
+
