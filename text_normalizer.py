@@ -7,7 +7,7 @@ from LineMatchHelper import *
 from OpenAISummarizer import *
 from ChapterComparer import *
 from FileHelper import FileHelper
-
+import time
 
 def main()->Any:
     input_dir = r"D:\tmp\dracula\src"
@@ -20,19 +20,51 @@ def main()->Any:
     original_file_path=path.join(output_dir, r"o000.txt")
     unredacted_file_path=path.join(output_dir, r"u000.txt")
 
-    BaseNormalization(input_dir,output_dir, files, regex)
-    dump_chapters("o000.txt", output_dir, "oc")
-    dump_chapters("u000.txt", output_dir, "uc")
+    #BaseNormalization(input_dir,output_dir, files, regex)
+    #dump_chapters("o000.txt", output_dir, "oc")
+    #dump_chapters("u000.txt", output_dir, "uc")
 
     oc_dir:str = path.join(output_dir, "oc")
     uc_dir:str = path.join(output_dir, "uc")
 
-    LineMatchHelper.CreateFileWithoutExtraLines(path.join(uc_dir,"uc001.txt"), path.join(oc_dir, "oc001.txt"), "uc_trimmed001.txt", uc_dir, regex)
+    similarity_file_name = "similarities.txt"
+    processed_similarities_filename = "similarities_processed.txt"
+
+
+
+    process_similarity_timings(output_dir, oc_dir, uc_dir, similarity_file_name, processed_similarities_filename)
+
+    #LineMatchHelper.CreateFileWithoutExtraLines(path.join(uc_dir,"uc001.txt"), path.join(oc_dir, "oc001.txt"), "uc_trimmed001.txt", uc_dir, regex)
 
     #print_matched_chapters(path.join(output_dir,"oc"), path.join(output_dir, "uc"))
 
     #summarize_chapters(output_dir, ["oc","uc"])
     return
+
+def process_similarity_timings(output_dir:str, source_dir:str, target_dir:str, similarity_file_name:str, processed_similarities_filename:str)->None:
+    start_time=time.time()
+    ctxt:MatchingContext=MatchingContext()
+    transformer:SentenceTransformer = LineMatchHelper.CreateTransformer()
+    ctxt.SetTransformer(transformer)
+    similarity_typenames:list[str]=["jaccard", "levenshtein", "sentence_transformer"]
+    for similarity_typename in similarity_typenames:
+        with open(path.join(output_dir, similarity_typename+"_"+similarity_file_name), 'w', encoding='utf-8') as f:
+            for i in range(30):
+                oc_file = path.join(source_dir, f"oc{i:03}.txt")
+                uc_file = path.join(target_dir, f"uc{i:03}.txt")
+                
+                similarity_funcs:dict[str, Callable[[MatchingContext, int, int], float]]={}
+                similarity_funcs[similarity_typenames[0]]=lambda ctxt, src, tgt: LineMatchHelper.jaccard_similarity(ctxt, src, tgt)
+                similarity_funcs[similarity_typenames[1]]=lambda ctxt, src, tgt: LineMatchHelper.levenshtein_similarity(ctxt, src, tgt)
+                similarity_funcs[similarity_typenames[2]]=lambda ctxt, src, tgt: LineMatchHelper.sentence_transformer_similarity(ctxt, src, tgt)
+
+                LineMatchHelper.DumpSimilarities(ctxt,f, uc_file, oc_file, similarity_typename,similarity_funcs[similarity_typename])
+                f.flush()
+                print(i)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Time taken: {elapsed_time:.3f} seconds")
+        #LineMatchHelper.process_file_into_buckets(path.join(output_dir, similarity_typename+"_"+similarity_file_name), path.join(output_dir, similarity_typename+"_"+processed_similarities_filename))
 
     
     #TrimExtraLines("o000.txt", "u000.txt", output_dir, .9, "90")
