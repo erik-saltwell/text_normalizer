@@ -79,49 +79,47 @@ class LineMatchHelper:
                 at least one "similar" match in `target`.
         """
 
-        src_lines = src.splitlines()
-        target_lines = target.splitlines()
-        #list_target_lines = list(target_lines)
-
-        filtered_lines = LineMatchHelper.__GetMatches(src_lines, target_lines, regex)
+        ctxt:MatchingContext =MatchingContext()
+        ctxt.SetText(src,target)
+        filtered_lines = LineMatchHelper.__GetMatches(ctxt, regex)
 
         # Join the kept lines with newlines to form the filtered string
         return "\n".join(filtered_lines)
 
     @staticmethod 
-    def __GetMatches(src_lines : list[str], target_lines : list[str], regex: RegexHelper)->list[str]:
-        regular_threshold:float=0.75
-        short_threshold:float = 0.5
+    def __GetMatches(ctxt: MatchingContext, regex: RegexHelper)->list[str]:
+        regular_threshold:float=0.45
+        short_threshold:float = 0.35
 
         filtered_lines = []
-        for s_line in src_lines:
-            print('+')
-            match_type:LineMatchType=LineMatchHelper.__ShouldCheckForMatch(s_line, regex)
+        for current_source_line in range(len(ctxt.Source_Sentences)):
+            match_type:LineMatchType=LineMatchHelper.__ShouldCheckForMatch(ctxt, current_source_line, regex)
             if match_type==LineMatchType.DO_NOT_MATCH:
-                filtered_lines.append(s_line)
+                filtered_lines.append(ctxt.Source_Sentences[current_source_line])
                 continue
             threshold:float = regular_threshold
             if match_type==LineMatchType.SHORT_MATCH:
                 threshold=short_threshold
             # Check against all lines in target to see if we find a "similar" line.
-            for t_line in target_lines:
-                if LineMatchHelper.__IsMatch(s_line, t_line, threshold):
-                    filtered_lines.append(s_line)
+            for current_target_line in range(len(ctxt.Target_Sentences)):
+                if LineMatchHelper.__IsMatch(ctxt, current_source_line, current_target_line, threshold):
+                    filtered_lines.append(ctxt.Source_Sentences[current_source_line])
                     break  # No need to check other lines in target once a match is found.
         return filtered_lines
         
     @staticmethod
-    def __IsMatch(source:str,target:str, threshold:float)->float:
-        if source.startswith('there were many things') and target.startswith('there were many things') :
-            print('<debug>')
-        similarity:float = difflib.SequenceMatcher(None, source, target).ratio()
+    def __IsMatch(ctxt: MatchingContext, current_source_line:int, current_target_line:int, threshold: float)->bool:
+        #if source.startswith('there were many things') and target.startswith('there were many things') :
+        #   print('<debug>')
+        similarity:float = LineMatchHelper.jaccard_similarity(ctxt, current_source_line, current_target_line)
         return_value:bool = similarity >=threshold
         return return_value
 
     @staticmethod
-    def __ShouldCheckForMatch(line:str, regex:RegexHelper)->LineMatchType:
+    def __ShouldCheckForMatch(ctxt: MatchingContext, current_source_line:int, regex:RegexHelper)->LineMatchType:
         shortest_match_len:int = 30
-        short_match_len:int = 75
+        short_match_len:int = 50
+        line:str = ctxt.Source_Sentences[current_source_line]
         line_len:int = len(line)
         if line_len <=short_match_len and TextProcessor.HasMatch(line, regex.SimpleDate):
             return LineMatchType.DO_NOT_MATCH

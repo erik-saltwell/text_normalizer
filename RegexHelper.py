@@ -30,7 +30,8 @@ class RegexHelper:
     def __init__(self):
         self.LeadingWhiteSpace = re.compile(r'^[ \t]+', re.MULTILINE)
         self.Annotation = re.compile(r'\[[^\]]*\]', re.MULTILINE)
-        self.Punctuation = re.compile(r'[\'\*"‘’“”-]+')
+        self.Punctuation = re.compile(r'[\*-]+')
+        self.Quotes = re.compile(r'[\'"‘’“”]')
         self.ChapterHeading = re.compile(r'(chapter [ixv]+)([\.]?)')
         self.DotTime = re.compile(r'(\d+)[\.:](\d+)')                                     
         self.DoubleAt = re.compile(r'@@')

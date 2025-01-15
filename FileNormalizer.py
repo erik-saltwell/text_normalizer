@@ -27,7 +27,8 @@ class FileNormalizer:
         
         file.RemoveAnnotations()
         file.UpdateWordReplacements()
-        #file.RemovePunctuation()
+        file.NormalizeQuotes()
+        file.RemovePunctuation()
         
         file.UpdateChapterHeadings()
         
@@ -67,6 +68,11 @@ class FileNormalizer:
 
     def RemoveAnnotations(self)->None:
         output : str = TextProcessor.Remove(self.regex.Annotation, self.text)
+        self.text = output
+
+    def NormalizeQuotes(self)->None:
+        output:str = TextProcessor.Replace(self.regex.Quotes,"", self.text)
+        output = TextProcessor.RemoveChars(output, "—:,")
         self.text = output
 
     def RemovePunctuation(self)->None:
