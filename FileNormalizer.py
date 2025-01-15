@@ -2,6 +2,8 @@ from TextProcessor import *
 from typing import List 
 from os import path
 from RegexHelper import *
+from LineMatchHelper import *
+from FileHelper import FileHelper
 
 class FileNormalizer:
     filename : str
@@ -9,12 +11,12 @@ class FileNormalizer:
     regex : RegexHelper
 
     def __init__(self, file_path:str, regex : RegexHelper):
-        self.text = FileNormalizer.LoadString(file_path)
+        self.text = FileHelper.LoadString(file_path)
         self.filename = path.basename(file_path)
         self.regex = regex
     
     @staticmethod 
-    def ProcessFile(input_file_path:str, output_dir:str, regex : RegexHelper, rename_late_chapters:bool=False)->None:
+    def ProcessFile(input_file_path:str, output_dir:str, regex : RegexHelper,  rename_late_chapters:bool=False)->None:
         file = FileNormalizer(input_file_path, regex)   
         file.Lowercase()
         if rename_late_chapters:
@@ -38,16 +40,7 @@ class FileNormalizer:
         file.TrimLeadingNewlines()
 
         file.Save(output_dir)
-    
-
-
-    @staticmethod    
-    def LoadString(file_path : str)->str:
-        output:str = ''
-        with open(file_path, 'r', encoding='utf-8') as f:
-            output = f.read()
-        return output
-    
+        
     def TokenizeSentences(self, text : str) -> List[str]:
         sentences = self.regex.split_into_sentences(self.text)
         return sentences
@@ -65,7 +58,7 @@ class FileNormalizer:
         self.text = output
 
     def Save(self, output_dir:str)->None:
-        FileNormalizer.SaveText(self.filename, output_dir, self.text)
+        FileHelper.SaveString(self.filename, output_dir, self.text)
 
     def StripEmptyLines(self)->None:
         lines : List[str] = self.text.splitlines()
@@ -141,11 +134,7 @@ class FileNormalizer:
         output = output.replace(chapter_end_slug, '')
         self.text=output
 
-    @staticmethod
-    def SaveText(filename:str, output_dir : str, text : str)->None:
-        file_path = path.join(output_dir, filename)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            output = f.write(text)
+
 
     @staticmethod
     def int_to_roman(num:int)->str:

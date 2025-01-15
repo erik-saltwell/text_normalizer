@@ -5,8 +5,8 @@ from os import path, listdir
 from RegexHelper import *
 from LineMatchHelper import *
 from OpenAISummarizer import *
-
-from datetime import datetime
+from ChapterComparer import *
+from FileHelper import FileHelper
 
 
 def main()->Any:
@@ -21,14 +21,20 @@ def main()->Any:
     unredacted_file_path=path.join(output_dir, r"u000.txt")
 
     BaseNormalization(input_dir,output_dir, files, regex)
+    dump_chapters("o000.txt", output_dir, "oc")
+    dump_chapters("u000.txt", output_dir, "uc")
+
+    oc_dir:str = path.join(output_dir, "oc")
+    uc_dir:str = path.join(output_dir, "uc")
+
+    LineMatchHelper.CreateFileWithoutExtraLines(path.join(uc_dir,"uc001.txt"), path.join(oc_dir, "oc001.txt"), "uc_trimmed001.txt", uc_dir, regex)
 
     #print_matched_chapters(path.join(output_dir,"oc"), path.join(output_dir, "uc"))
 
     #summarize_chapters(output_dir, ["oc","uc"])
     return
 
-    #dump_chapters("o000.txt", output_dir, "oc")
-    #dump_chapters("u000.txt", output_dir, "uc")
+    
     #TrimExtraLines("o000.txt", "u000.txt", output_dir, .9, "90")
     # for i in range(75,100,1):
     #     n=i+1
@@ -45,7 +51,7 @@ def print_matched_chapters(original_dir:str, unredactred_dir:str)->None:
 
 def print_matched_chaptersd_for_side(sources:list[str], targets:list[str], tag:str)->None:
     for i in range(len(sources)):
-        result:ChapterMatchResult = LineMatchHelper.FindMostSimilarChapter(sources[i], targets)
+        result:ChapterMatchResult = ChapterComparer.FindMostSimilarChapter(sources[i], targets)
         print(f"{tag}\t{i:03}\t{result.ChapterId:03}\t{result.Similarity}")
 
 def load_files_to_strings(directory):
@@ -94,24 +100,11 @@ def summarize_chapters_for_prefix(dir:str, prefix:str)->list[str]:
     return return_value
     
 
-def dump_chapters(file_name : str,output_dir:str, output_pref:str)->None:
+def dump_chapters(file_name : str,output_dir:str, output_prefix:str)->None:
     file_path=path.join(output_dir, file_name)
-    text : str = FileNormalizer.LoadString(file_path)
-    LineMatchHelper.SaveChapters(text, output_dir, output_pref)
+    text : str = FileHelper.LoadString(file_path)
+    ChapterComparer.SaveChapters(text, output_dir, output_prefix)
     return
-
-def TrimExtraLines(original_file_name : str, unredacted_file_name : str, output_dir:str, threshold : float, output_file_tag : str)->None:
-    print("start")
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
-    original_file_path=path.join(output_dir, original_file_name)
-    unredacted_file_path=path.join(output_dir, unredacted_file_name)
-
-    original_text = FileNormalizer.LoadString(original_file_path)
-    unredacted_text = FileNormalizer.LoadString(unredacted_file_path)
-    trimmed_unredacted_text = LineMatchHelper.filter_lines_by_similarity(unredacted_text, original_text, threshold)
-    FileNormalizer.SaveText("u"+output_file_tag+"t000.txt", output_dir, trimmed_unredacted_text)
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
-    print("stop")
 
 def BaseNormalization(input_dir:str, output_dir:str, files : List[str], regex:RegexHelper)->None:
     for file_name in files:

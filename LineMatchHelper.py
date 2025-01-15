@@ -1,14 +1,33 @@
 import difflib
-from os import path
-from typing import NamedTuple
+from enum import Enum
+from TextProcessor import *
+from RegexHelper import *
+from FileHelper import FileHelper
+import Levenshtein
 
-class ChapterMatchResult(NamedTuple):
-    ChapterId:int
-    Similarity:float
 
+
+class LineMatchType(int, Enum):
+    DO_NOT_MATCH=0,
+    SHORT_MATCH=1,
+    NORMAL_MATCH=2
+    
 class LineMatchHelper:
+
     @staticmethod
-    def filter_lines_by_similarity(src: str, target: str, min_diff_threshold: float) -> str:
+    def CreateFileWithoutExtraLines(source_file_path : str, target_file_path : str, output_file_name:str, output_dir:str, regex:RegexHelper )->None:
+        #print("start")
+        #print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+
+        source_text:str = FileHelper.LoadString(source_file_path)
+        target_text:str = FileHelper.LoadString(target_file_path)
+        trimmed_unredacted_text:str = LineMatchHelper.__FilterLinesBySimilarity(source_text, target_text, regex)
+        FileHelper.SaveString(output_file_name, output_dir, trimmed_unredacted_text)
+        #print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+        #print("stop")
+
+    @staticmethod
+    def __FilterLinesBySimilarity(src: str, target: str, regex:RegexHelper) -> str:
         """
         Returns a copy of `src` where lines have been removed if there are no lines in `target`
         that are similar to the line in `src`, based on `min_diff_threshold`.
@@ -25,72 +44,51 @@ class LineMatchHelper:
         target_lines = target.splitlines()
         #list_target_lines = list(target_lines)
 
-        filtered_lines = LineMatchHelper.__GetMatched(src_lines, target_lines, min_diff_threshold)
+        filtered_lines = LineMatchHelper.__GetMatches(src_lines, target_lines, regex)
 
         # Join the kept lines with newlines to form the filtered string
         return "\n".join(filtered_lines)
-    
-    @staticmethod
-    def SaveChapters(src: str, output_dir : str, outfile_prefix:str)->None:
-        src_lines = src.splitlines()
-        match : str = "chapter "
-        nested_src_lines : list[list[str]] = LineMatchHelper.SplitLists(src_lines, match)
-        n=0
-        for chapter_lines in nested_src_lines:
-            output : str = "\n".join(chapter_lines)
-            file_path = path.join(output_dir, outfile_prefix+f"{n:03}"+".txt")
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(output)
-            n=n+1
-        return
-
-    @staticmethod
-    def __GetMatched(src_lines : list[str], target_lines : list[str], min_diff_threshold : float)->list[str]:
-        match : str = "chapter "
-        nested_src_lines : list[list[str]] = LineMatchHelper.SplitLists(src_lines, match)
-        nested_target_lines : list[list[str]] =  LineMatchHelper.SplitLists(target_lines, match)
-        LineMatchHelper.__TraceChapters(nested_src_lines, "src")
-        LineMatchHelper.__TraceChapters(nested_target_lines, "target")
-
-        src_count = len(nested_src_lines)
-        t_count = len(nested_target_lines)
-        
-        assert len(nested_src_lines) == len(nested_target_lines)
-        count:int = len(nested_src_lines)
-        return_value : list[str]=list([])
-
-        base_line_num : int=0
-        for i in range(count):
-            next_filtered_lines = LineMatchHelper.__GetMatchedFromSingleList(nested_src_lines[i], nested_target_lines[i], min_diff_threshold, base_line_num)
-            for next in next_filtered_lines:
-                return_value.append(next)
-            base_line_num = base_line_num + len(next_filtered_lines)
-        return return_value
-    
-    @staticmethod
-    def __TraceChapters(chapters : list[list[str]], name:str)->None:
-        print("***** " + name + " *****")
-        for chapter in chapters:
-            print(chapter[0])
-            for i in range(1, min(7, len(chapter)-1),1):
-                print("\t"+chapter[i])
-
 
     @staticmethod 
-    def __GetMatchedFromSingleList(src_lines : list[str], target_lines : list[str], min_diff_threshold : float, base_line_num: int)->list[str]:
-        filtered_lines = []
-        n = 0
+    def __GetMatches(src_lines : list[str], target_lines : list[str], regex: RegexHelper)->list[str]:
+        regular_threshold:float=0.75
+        short_threshold:float = 0.5
 
+        filtered_lines = []
         for s_line in src_lines:
-            n=n+1
-            print(base_line_num+n)
+            print('+')
+            match_type:LineMatchType=LineMatchHelper.__ShouldCheckForMatch(s_line, regex)
+            if match_type==LineMatchType.DO_NOT_MATCH:
+                filtered_lines.append(s_line)
+                continue
+            threshold:float = regular_threshold
+            if match_type==LineMatchType.SHORT_MATCH:
+                threshold=short_threshold
             # Check against all lines in target to see if we find a "similar" line.
             for t_line in target_lines:
-                similarity = difflib.SequenceMatcher(None, s_line, t_line).ratio()
-                if similarity >= min_diff_threshold:
+                if LineMatchHelper.__IsMatch(s_line, t_line, threshold):
                     filtered_lines.append(s_line)
                     break  # No need to check other lines in target once a match is found.
         return filtered_lines
+        
+    @staticmethod
+    def __IsMatch(source:str,target:str, threshold:float)->float:
+        if source.startswith('there were many things') and target.startswith('there were many things') :
+            print('<debug>')
+        similarity:float = difflib.SequenceMatcher(None, source, target).ratio()
+        return_value:bool = similarity >=threshold
+        return return_value
+
+    @staticmethod
+    def __ShouldCheckForMatch(line:str, regex:RegexHelper)->LineMatchType:
+        shortest_match_len:int = 30
+        short_match_len:int = 75
+        line_len:int = len(line)
+        if line_len <=short_match_len and TextProcessor.HasMatch(line, regex.SimpleDate):
+            return LineMatchType.DO_NOT_MATCH
+        if line_len <= short_match_len:
+            return LineMatchType.SHORT_MATCH
+        return LineMatchType.NORMAL_MATCH
 
     @staticmethod 
     def SplitLists(src : list[str], check: str)->list [ list[str] ]:
@@ -106,43 +104,20 @@ class LineMatchHelper:
         return return_value
     
     @staticmethod
-    def FindMostSimilarChapter(src:str, targets:list[str])->ChapterMatchResult:
-        return_value:int=-1
-        best_similarity:float=-1.0
-        for i in range(len(targets)):
-            similarity = difflib.SequenceMatcher(None, src, targets[i]).ratio()
-            if similarity > best_similarity:
-                return_value=i
-                best_similarity=similarity
-        return ChapterMatchResult(return_value,best_similarity)
-
+    def jaccard_similarity(str1:str, str2:str)->float:
+        set1 = set(str1.split())
+        set2 = set(str2.split())
+        intersection = float(len(set1.intersection(set2)))
+        union = float(len(set1.union(set2)))
+        similarity:float = intersection / union
+        return similarity
+    
     @staticmethod
-    def roman_to_int(roman:str)->int:
-        """
-        Convert a Roman numeral string to an integer.
-
-        Args:
-            roman (str): The Roman numeral string. Must be a valid Roman numeral.
-
-        Returns:
-            int: The integer representation of the input Roman numeral.
-        """
-        # Define a mapping of Roman numeral symbols to their values
-        roman_to_value = {
-            'I': 1, 'V': 5, 'X': 10, 'L': 50,
-            'C': 100, 'D': 500, 'M': 1000
-        }
-
-        total = 0
-        prev_value = 0
-
-        # Iterate over the Roman numeral string in reverse order
-        for char in reversed(roman):
-            value = roman_to_value[char]
-            if value < prev_value:
-                total -= value  # Subtract if the current value is less than the previous one
-            else:
-                total += value  # Add otherwise
-            prev_value = value
-
-        return total
+    def levenshtein_similarity(str1:str,str2:str)->float:
+        similarity:float = Levenshtein.ratio(str1, str2)
+        return similarity
+    
+    @staticmethod
+    def difflib_similarity(str1:str,str2:str)->float:
+        similarity:float = difflib.SequenceMatcher(None, str1, str2).ratio()
+        return similarity

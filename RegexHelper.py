@@ -12,6 +12,7 @@ class RegexHelper:
     starters = "(Mr|Mrs|Ms|Dr|Prof|Capt|Cpt|Lt|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)"
     acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
     websites = "[.](com|net|org|io|gov|edu|me)"
+    
     digits = "([0-9])"
     multiple_dots = r'\.{2,}'
 
@@ -24,6 +25,7 @@ class RegexHelper:
     WordReplacements : list[WordReplacement]    
     TripleStar : re.Pattern
     DoubleSpace : re.Pattern
+    SimpleDate : re.Pattern
 
     def __init__(self):
         self.LeadingWhiteSpace = re.compile(r'^[ \t]+', re.MULTILINE)
@@ -34,6 +36,7 @@ class RegexHelper:
         self.DoubleAt = re.compile(r'@@')
         self.TripleStar = re.compile(r'\* \* \*')
         self.DoubleSpace = re.compile(r'[ \t]+')
+        self.SimpleDate = re.compile(r'\b\d{1,2} (january|february|march|april|may|june|july|august|september|october|november|december)\b')
 
         self.WordReplacements = []
         self.WordReplacements.append(WordReplacement(re.compile("housemade"), "homemade"))
@@ -84,3 +87,4 @@ class RegexHelper:
         if sentences and not sentences[-1]: 
             sentences = sentences[:-1]
         return sentences
+

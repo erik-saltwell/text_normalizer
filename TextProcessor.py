@@ -28,3 +28,6 @@ class TextProcessor:
         # Keep only the characters not in chars_to_remove
         return "".join(ch for ch in text if ch not in chars_to_remove)
 
+    @staticmethod
+    def HasMatch(text:str, pattern:re.Pattern)->bool:
+        return bool(pattern.search(text))
