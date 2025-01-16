@@ -17,6 +17,10 @@ class ChapterComparer:
         nested_src_lines : list[list[str]] = LineMatchHelper.SplitLists(src_lines, match)
         n=0
         for chapter_lines in nested_src_lines:
+            # outuput_lines:list[str]=[]
+            # for line in chapter_lines:
+            #     outuput_lines.append(line)
+            #     outuput_lines.append("<empty_line>")
             output : str = "\n".join(chapter_lines)
             file_path = path.join(output_dir, outfile_prefix, outfile_prefix+f"{n:03}"+".txt")
             with open(file_path, 'w', encoding='utf-8') as f:

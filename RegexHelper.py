@@ -65,7 +65,7 @@ class RegexHelper:
         text = re.sub(self.multiple_dots, lambda match: "<prd>" * len(match.group(0)) + "<stop>", text)
         if "Ph.D" in text: 
             text = text.replace("Ph.D.","Ph<prd>D<prd>")
-        text = re.sub("\s" + self.alphabets + "[.] "," \\1<prd> ",text)
+        text = re.sub(r"\s" + self.alphabets + "[.] "," \\1<prd> ",text)
         text = re.sub(self.acronyms+" "+self.starters,"\\1<stop> \\2",text)
         text = re.sub(self.alphabets + "[.]" + self.alphabets + "[.]" + self.alphabets + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
         text = re.sub(self.alphabets + "[.]" + self.alphabets + "[.]","\\1<prd>\\2<prd>",text)
@@ -80,12 +80,16 @@ class RegexHelper:
         for punct in ['.', '?', '!']:
             for quot in ["'", '"', '’', '”', ')',']']:
                 text=text.replace(punct + quot, quot+punct)
-        text = text.replace("<stop><stop>","<stop>")
+        
 
         text = text.replace(".",".<stop>")
         text = text.replace("?","?<stop>")
         text = text.replace("!","!<stop>")
         text = text.replace("<prd>",".")
+
+        text = text.replace("<stop><stop>","<stop>")
+        #text= text.replace("<stop>", "<stop>")
+
         sentences = text.split("<stop>")
         sentences = [s.strip() for s in sentences]
         if sentences and not sentences[-1]: 
