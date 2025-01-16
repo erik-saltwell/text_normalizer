@@ -31,7 +31,7 @@ class RegexHelper:
         self.LeadingWhiteSpace = re.compile(r'^[ \t]+', re.MULTILINE)
         self.Annotation = re.compile(r'\[[^\]]*\]', re.MULTILINE)
         self.Punctuation = re.compile(r'[\*-]+')
-        self.Quotes = re.compile(r'[\'"‘’“”]')
+        self.Quotes = re.compile(r'[\'"‘’“”\']')
         self.ChapterHeading = re.compile(r'(chapter [ixv]+)([\.]?)')
         self.DotTime = re.compile(r'(\d+)[\.:](\d+)')                                     
         self.DoubleAt = re.compile(r'@@')
@@ -41,10 +41,13 @@ class RegexHelper:
 
         self.WordReplacements = []
         self.WordReplacements.append(WordReplacement(re.compile("housemade"), "homemade"))
-        self.WordReplacements.append(WordReplacement(re.compile("st\."), "st"))
-        self.WordReplacements.append(WordReplacement(re.compile("mem\."), "mem"))
-        self.WordReplacements.append(WordReplacement(re.compile("dr\."), "dr"))
-        self.WordReplacements.append(WordReplacement(re.compile("hon\."), "hon"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"st."), "st"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"mem."), "mem"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"dr."), "dr"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"hon."), "hon"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"mr."), "mr"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"ms."), "ms"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"mrs."), "mrs"))
 
     def replace_all_matches(self, pattern, replacement, text):
         return re.sub(pattern, replacement, text)

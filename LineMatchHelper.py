@@ -142,6 +142,8 @@ class LineMatchHelper:
     
     @staticmethod
     def jaccard_similarity(ctxt:MatchingContext, current__source_line:int, current_target_line:int)->float:
+        src_line:str=ctxt.Source_Sentences[current__source_line]
+        target_line:str=ctxt.Target_Sentences[current_target_line]
         src_set = ctxt.Source_WordSets[current__source_line]
         target_set = ctxt.Target_WordSets[current_target_line]
         intersection = float(len(src_set.intersection(target_set)))

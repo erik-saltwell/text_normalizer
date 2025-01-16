@@ -27,12 +27,11 @@ def main()->Any:
     oc_dir:str = path.join(output_dir, "oc")
     uc_dir:str = path.join(output_dir, "uc")
 
-    TrimExtraLines(uc_dir, oc_dir, "uc", "oc", "uc_trimmed", regex)
-    TrimExtraLines(oc_dir, uc_dir, "oc", "uc_trimmed", "oc_trimmed", regex)
-
-
     dump_chapters("o000.txt", output_dir, "oc")
     dump_chapters("u000.txt", output_dir, "uc")
+
+    TrimExtraLines(uc_dir, oc_dir, "uc", "oc", "uc_trimmed", regex)
+    TrimExtraLines(oc_dir, uc_dir, "oc", "uc_trimmed", "oc_trimmed", regex)
 
  #   similarity_file_name = "similarities.txt"
  #   processed_similarities_filename = "similarities_processed.txt"

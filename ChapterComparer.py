@@ -1,7 +1,8 @@
 from typing import NamedTuple
-from os import path
+from os import path, makedirs
 import difflib
 from LineMatchHelper import *
+
 
 class ChapterMatchResult(NamedTuple):
     ChapterId:int
@@ -10,6 +11,7 @@ class ChapterMatchResult(NamedTuple):
 class ChapterComparer:
     @staticmethod
     def SaveChapters(src: str, output_dir : str, outfile_prefix:str)->None:
+        ChapterComparer.ensure_directory_exists(path.join(output_dir, outfile_prefix))
         src_lines = src.splitlines()
         match : str = "chapter "
         nested_src_lines : list[list[str]] = LineMatchHelper.SplitLists(src_lines, match)
@@ -22,6 +24,12 @@ class ChapterComparer:
             n=n+1
         return
     
+
+    @staticmethod
+    def ensure_directory_exists(directory_path: str)->None:
+        if not path.exists(directory_path):
+            makedirs(directory_path)
+
     @staticmethod
     def FindMostSimilarChapter(src:str, targets:list[str])->ChapterMatchResult:
         return_value:int=-1

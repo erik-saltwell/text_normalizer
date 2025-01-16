@@ -39,6 +39,7 @@ class FileNormalizer:
         file.StripEmptyLines()
         file.Sentencize()
         file.TrimLeadingNewlines()
+        file.TrimTripleDots()
 
         file.Save(output_dir)
         
@@ -50,6 +51,11 @@ class FileNormalizer:
         #output = [str(sentence) for sentence in text_spacy.sents ]
         #return output
     
+    def TrimTripleDots(self)->None:
+        output:str=self.text
+        output = output.replace("...", ".")
+        self.text=output
+
     def RemoveLeadingWhiteSpaceInLine(self)->None:
         output : str = TextProcessor.Remove(self.regex.LeadingWhiteSpace, self.text)
         self.text= output
@@ -77,7 +83,7 @@ class FileNormalizer:
 
     def RemovePunctuation(self)->None:
         output:str = TextProcessor.Remove(self.regex.Punctuation, self.text)
-        output = TextProcessor.RemoveChars(output, "—:,")
+        output = TextProcessor.RemoveChars(output, "—:,;")
         self.text = output
 
     def Sentencize(self)->None:
