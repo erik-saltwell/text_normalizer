@@ -172,6 +172,48 @@ class LineMatchHelper:
         model:SentenceTransformer = SentenceTransformer('all-MiniLM-L6-v2')
         return model
 
+    @staticmethod
+    def GetBestMatch(ctxt:MatchingContext, current__source_line:int)->int:
+        """
+        Given a target string and a list of options, returns the index of the most similar string
+        based on the get_similarity function.
+
+        :param target: The string to compare against.
+        :param options: A list of strings to find the best match from.
+        :return: The index of the most similar string in the options list.
+        """
+        best_index = -1
+        best_score = float("-inf")
+
+        for i in range(len(ctxt.Target_Sentences)):
+            similarity = LineMatchHelper.jaccard_similarity(ctxt, current__source_line, i)
+            if similarity > best_score:
+                best_score = similarity
+                best_index = i
+
+        return best_index
+    
+    @staticmethod
+    def GetUnmatchedWords(ctxt:MatchingContext, current_source_line:int, current_target_line:int)-> set[str]:
+        set1:set[str] = ctxt.Source_WordSets[current_source_line]
+        set2:set[str] = ctxt.Target_WordSets[current_target_line]
+        return_value:set[str]=set1^set2
+        return return_value
+
+    @staticmethod
+    def AreNearlyIdentical(ctxt:MatchingContext, current_source_line:int, current_target_line:int)->bool:
+        diffs:set[str]=LineMatchHelper.GetUnmatchedWords(ctxt, current_source_line, current_target_line)
+        if len(diffs)==0:
+            return True
+        if abs(current_source_line-current_target_line) > 10:
+            return False
+        if len(diffs)>2:
+            return False
+        
+        if len(diffs)==2 and 'to' in diffs and 'of' in diffs:
+            return True
+
+        return False
 
     @staticmethod 
     def DumpSimilarities( ctxt:MatchingContext, file:TextIO, source_file:str, target_file:str, algorithm_name:str, similarity_func: Callable[[MatchingContext, int, int], float])->None:

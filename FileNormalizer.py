@@ -4,6 +4,7 @@ from os import path
 from RegexHelper import *
 from LineMatchHelper import *
 from FileHelper import FileHelper
+import diagnostics
 
 class FileNormalizer:
     filename : str
@@ -36,13 +37,20 @@ class FileNormalizer:
         file.RemoveLeadingWhiteSpaceInLine()
 
         file.RemoveDoubleSpace()
+
+        file.TrimTripleDots()
         file.StripEmptyLines()
+
         file.Sentencize()
         file.TrimLeadingNewlines()
-        file.TrimTripleDots()
-
+        
+        assert file.IsGood()
         file.Save(output_dir)
         
+    def IsGood(self)->bool:
+        text:str = self.text
+        return diagnostics.is_healthy(text)
+    
     def TokenizeSentences(self, text : str) -> List[str]:
         sentences = self.regex.split_into_sentences(self.text)
         return sentences
@@ -53,7 +61,7 @@ class FileNormalizer:
     
     def TrimTripleDots(self)->None:
         output:str=self.text
-        output = output.replace("...", ".")
+        output = TextProcessor.Replace(self.regex.MultiDot, '.', self.text)
         self.text=output
 
     def RemoveLeadingWhiteSpaceInLine(self)->None:

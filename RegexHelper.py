@@ -26,6 +26,7 @@ class RegexHelper:
     TripleStar : re.Pattern
     DoubleSpace : re.Pattern
     SimpleDate : re.Pattern
+    MultiDot : re.Pattern
 
     def __init__(self):
         self.LeadingWhiteSpace = re.compile(r'^[ \t]+', re.MULTILINE)
@@ -38,16 +39,17 @@ class RegexHelper:
         self.TripleStar = re.compile(r'\* \* \*')
         self.DoubleSpace = re.compile(r'[ \t]+')
         self.SimpleDate = re.compile(r'\b\d{1,2} (january|february|march|april|may|june|july|august|september|october|november|december)\b')
+        self.MultiDot = re.compile(r'\.[\.]+')
 
         self.WordReplacements = []
         self.WordReplacements.append(WordReplacement(re.compile("housemade"), "homemade"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"st."), "st"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"mem."), "mem"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"dr."), "dr"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"hon."), "hon"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"mr."), "mr"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"ms."), "ms"))
-        self.WordReplacements.append(WordReplacement(re.compile(r"mrs."), "mrs"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"st\."), "st"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"mem\."), "mem"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"dr\."), "dr"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"hon\."), "hon"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"mr\."), "mr"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"ms\."), "ms"))
+        self.WordReplacements.append(WordReplacement(re.compile(r"mrs\."), "mrs"))
 
     def replace_all_matches(self, pattern, replacement, text):
         return re.sub(pattern, replacement, text)

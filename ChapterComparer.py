@@ -2,7 +2,7 @@ from typing import NamedTuple
 from os import path, makedirs
 import difflib
 from LineMatchHelper import *
-
+import diagnostics
 
 class ChapterMatchResult(NamedTuple):
     ChapterId:int
@@ -22,6 +22,7 @@ class ChapterComparer:
             #     outuput_lines.append(line)
             #     outuput_lines.append("<empty_line>")
             output : str = "\n".join(chapter_lines)
+            # assert diagnostics.is_healthy(output)
             file_path = path.join(output_dir, outfile_prefix, outfile_prefix+f"{n:03}"+".txt")
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(output)

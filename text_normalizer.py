@@ -33,6 +33,8 @@ def main()->Any:
     TrimExtraLines(uc_dir, oc_dir, "uc", "oc", "uc_trimmed", regex)
     TrimExtraLines(oc_dir, uc_dir, "oc", "uc_trimmed", "oc_trimmed", regex)
 
+    MatchSimilarLines(oc_dir, uc_dir, path.join(oc_dir, "matched"))
+
  #   similarity_file_name = "similarities.txt"
  #   processed_similarities_filename = "similarities_processed.txt"
  #   process_similarity_timings(output_dir, oc_dir, uc_dir, similarity_file_name, processed_similarities_filename)
@@ -45,6 +47,29 @@ def main()->Any:
 
     #summarize_chapters(output_dir, ["oc","uc"])
     return
+
+def MatchSimilarLines(oc_input_dir:str, uc_input_dir:str, oc_output_dir:str)->None:
+    for chapter_id in range(30):
+        MatchSimilarLinesOfChapter(oc_input_dir, uc_input_dir, oc_output_dir, chapter_id)
+
+def MatchSimilarLinesOfChapter(oc_input_dir:str, uc_input_dir:str, oc_output_dir:str, chapter_id:int)->None:
+    oc_input_filepath:str = path.join(oc_input_dir, f"oc_trimmed{chapter_id:03}.txt")
+    uc_input_filepath:str = path.join(uc_input_dir, f"uc_trimmed{chapter_id:03}.txt")
+    oc_text:str = FileHelper.LoadString(oc_input_filepath)
+    uc_text:str = FileHelper.LoadString(uc_input_filepath)
+    ctxt:MatchingContext = MatchingContext()
+    ctxt.SetText(oc_text, uc_text)
+    new_oc_lines:list[str] = []
+    for source_line_id in range(len(ctxt.Source_Sentences)):
+        target_line_id = LineMatchHelper.GetBestMatch(ctxt, source_line_id)
+        if LineMatchHelper.AreNearlyIdentical(ctxt, source_line_id,target_line_id):
+            new_oc_lines.append(ctxt.Target_Sentences[target_line_id])
+        else:
+            new_oc_lines.append(ctxt.Source_Sentences[source_line_id])
+    output:str = "\n".join(new_oc_lines)
+    FileHelper.SaveString(f"oc_matched{chapter_id:03}.txt", oc_output_dir, output)
+    print(f"m{chapter_id:03}")
+
 
 def TrimExtraLines(source_dir:str, target_dir:str, source_prefix:str, target_prefix:str, output_prefix:str, regex: RegexHelper)->None:
     for chapter_id in range(30):
